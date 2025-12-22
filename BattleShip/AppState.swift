@@ -311,7 +311,9 @@ final class AppState: ObservableObject {
             attempts += 1
             target = Coord(row: Int.random(in: 0...7, using: &rng),
                            col: Int.random(in: 0...7, using: &rng))
-        } while playerMarks[target] != nil && attempts < 300
+        } while playerBoard.shots.contains(target) && attempts < 300
+
+        playerBoard.shots.insert(target)
 
         // record
         if let pIdx = playerBoard.ships.firstIndex(where: { $0.cells.contains(target) }) {
