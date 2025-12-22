@@ -15,7 +15,13 @@ struct PlacementScreen: View {
                 hoverValid: state.hoverIsValid,
                 isInteractive: true,
                 labelsStyle: .placement, // rows-left + cols-top
-                onTap: { coord in handlePlacementTap(coord) }
+                onTap: { coord in
+                    if let pending = state.pendingOrigin, pending == coord {
+                        state.commitPlacementPreview()
+                    } else {
+                        state.previewPlacement(at: coord)
+                    }
+                }
             )
             .frame(maxHeight: .infinity)
             .padding(.horizontal, 8)
@@ -26,6 +32,9 @@ struct PlacementScreen: View {
         }
         .padding(.top, 8)
         .background(Color(.systemGroupedBackground))
+        .onAppear {
+            state.loadIfAvailable()
+        }
     }
 
     private var header: some View {
@@ -39,38 +48,12 @@ struct PlacementScreen: View {
     }
 
     private func handlePlacementTap(_ coord: Coord) {
-        // Second tap on same origin places (if valid)
-        if state.pendingOrigin == coord,
-           state.hoverIsValid,
-           !state.hoverCells.isEmpty {
-            commitPendingPlacement()
-            return
-        }
-
-        // First tap (or different origin): update preview
-        let cells = cellsFor(ship: state.selectedShip, origin: coord, orientation: state.orientation)
-        let valid = validatePlacement(cells: cells)
-
-        state.pendingOrigin = coord
-        state.hoverCells = Set(cells)
-        state.hoverIsValid = valid
+        // Deprecated: logic moved into AppState. Kept for compatibility.
+        state.previewPlacement(at: coord)
     }
 
     private func commitPendingPlacement() {
-        for c in state.hoverCells {
-            state.playerMarks[c] = .ship
-        }
-        state.placedShips.insert(state.selectedShip)
-
-        // Clear preview
-        state.pendingOrigin = nil
-        state.hoverCells = []
-        state.hoverIsValid = true
-
-        // Auto-advance
-        if let next = ShipType.allCases.first(where: { !state.placedShips.contains($0) }) {
-            state.selectedShip = next
-        }
+        state.commitPlacementPreview()
     }
 
     private func validatePlacement(cells: [Coord]) -> Bool {
@@ -121,32 +104,30 @@ private struct PlacementControlsView: View {
             HStack(spacing: 12) {
                 Button {
                     state.orientation.toggle()
-                    // If we had a pending origin, recompute preview with new orientation
-                    if let origin = state.pendingOrigin {
-                        let cells = (0..<state.selectedShip.length).map { i -> Coord in
-                            switch state.orientation {
-                            case .horizontal: return Coord(row: origin.row, col: origin.col + i)
-                            case .vertical:   return Coord(row: origin.row + i, col: origin.col)
-                            }
-                        }
-                        state.hoverCells = Set(cells)
-                        state.hoverIsValid = cells.allSatisfy {
-                            (0..<8).contains($0.row) && (0..<8).contains($0.col) && state.playerMarks[$0] != .ship
-                        }
-                    }
+                    if let origin = state.pendingOrigin { state.previewPlacement(at: origin) }
                 } label: {
                     Label("Rotate (\(state.orientation.rawValue))", systemImage: "rotate.right")
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
 
-                Button {
-                    // UI-only placeholder for now
-                } label: {
-                    Label("Auto-place", systemImage: "wand.and.stars")
-                        .frame(maxWidth: .infinity)
+                if state.pendingOrigin != nil && state.hoverIsValid {
+                    Button {
+                        state.commitPlacementPreview()
+                    } label: {
+                        Label("Place Ship", systemImage: "checkmark")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                } else {
+                    Button {
+                        state.autoPlacePlayer()
+                    } label: {
+                        Label("Auto-place", systemImage: "wand.and.stars")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
                 }
-                .buttonStyle(.bordered)
             }
 
             HStack(spacing: 12) {
@@ -165,7 +146,7 @@ private struct PlacementControlsView: View {
                 .buttonStyle(.bordered)
 
                 Button {
-                    state.screen = .battle
+                    state.startBattle()
                 } label: {
                     Text("Start Battle")
                         .frame(maxWidth: .infinity)

@@ -6,8 +6,13 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		59D11A222EF976D9000D51BE /* IconGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59D11A212EF976D9000D51BE /* IconGenerator.swift */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		596B49222EF95D59007D0E6B /* BattleShip.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BattleShip.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		59D11A212EF976D9000D51BE /* IconGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IconGenerator.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -34,6 +39,7 @@
 			children = (
 				596B49242EF95D59007D0E6B /* BattleShip */,
 				596B49232EF95D59007D0E6B /* Products */,
+				59D11A212EF976D9000D51BE /* IconGenerator.swift */,
 			);
 			sourceTree = "<group>";
 		};
@@ -119,6 +125,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				59D11A222EF976D9000D51BE /* IconGenerator.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
